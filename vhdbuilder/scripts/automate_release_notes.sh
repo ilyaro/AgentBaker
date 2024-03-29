@@ -36,6 +36,10 @@ generate_release_notes() {
     done
 }
 
+compress_release_notes() {
+    tar -czvf release_notes.tar.gz release_notes
+}
+
 set_git_config
 if [ `git branch --list $branch_name` ]; then
     git checkout $branch_name
@@ -46,6 +50,7 @@ else
 fi
 
 generate_release_notes
+compress_release_notes
 git status
 set +x
 create_pull_request $image_version $github_access_token $branch_name $pr_title
