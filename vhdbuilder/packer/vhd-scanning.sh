@@ -16,7 +16,7 @@ TEST_VM_ADMIN_USERNAME="azureuser"
 if [ -z "$PACKER_BUILD_LOCATION" ]; then
     echo "PACKER_BUILD_LOCATION must be set to run VHD scanning"
     exit 1
-fi 
+fi
 
 # Use the domain name from the classic blob URL to get the storage account name.
 # If the CLASSIC_BLOB var is not set create a new var called BLOB_STORAGE_NAME in the pipeline.
@@ -53,7 +53,7 @@ function cleanup() {
     if [ -n "${VM_PRINCIPLE_ID}" ]; then
         az role assignment delete --assignee $VM_PRINCIPLE_ID --role "Storage Blob Data Contributor" --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP_NAME}"
         echo "Role assignment deleted."
-    fi 
+    fi
 }
 trap cleanup EXIT
 
@@ -93,6 +93,8 @@ az vm run-command invoke \
 TIMESTAMP=$(date +%s%3N)
 TRIVY_REPORT_NAME="trivy-report-${BUILD_ID}-${TIMESTAMP}.json"
 TRIVY_TABLE_NAME="trivy-table-${BUILD_ID}-${TIMESTAMP}.txt"
+#"TRIVY_REPORT_NAME=${TRIVY_REPORT_NAME}" \
+# "TRIVY_TABLE_NAME=${TRIVY_TABLE_NAME}" \
 EXE_SCRIPT_PATH="$CDIR/$EXE_SCRIPT_PATH"
 az vm run-command invoke \
     --command-id RunShellScript \
@@ -103,8 +105,8 @@ az vm run-command invoke \
         "OS_VERSION=${OS_VERSION}" \
         "TEST_VM_ADMIN_USERNAME=${TEST_VM_ADMIN_USERNAME}" \
         "ARCHITECTURE=${ARCHITECTURE}" \
-        "TRIVY_REPORT_NAME=${TRIVY_REPORT_NAME}" \
-        "TRIVY_TABLE_NAME=${TRIVY_TABLE_NAME}" \
+        "BUILD_ID=${BUILD_ID}" \
+        "TIMESTAMP=${TIMESTAMP}" \
         "SIG_CONTAINER_NAME"=${SIG_CONTAINER_NAME} \
         "STORAGE_ACCOUNT_NAME"=${STORAGE_ACCOUNT_NAME} \
         "ENABLE_TRUSTED_LAUNCH"=${ENABLE_TRUSTED_LAUNCH}

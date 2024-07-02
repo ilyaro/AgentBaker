@@ -5,11 +5,13 @@ OS_SKU=$1
 OS_VERSION=$2
 TEST_VM_ADMIN_USERNAME=$3
 ARCHITECTURE=$4
-TRIVY_REPORT_NAME=$5
-TRIVY_TABLE_NAME=$6
+BUILD_ID=$5
+TIMESTAMP=$6
 SIG_CONTAINER_NAME=$7
 STORAGE_ACCOUNT_NAME=$8
 ENABLE_TRUSTED_LAUNCH=$9
+
+TRIVY_REPORT_ROOTFS_NAME="trivy-report-rootfs-${BUILD_ID}-${TIMESTAMP}.json"
 
 if [[ "$OS_SKU" == "Ubuntu" ]] && [[ "$OS_VERSION" == "20.04" ]]; then
     sudo apt-get install -y azure-cli
@@ -45,14 +47,18 @@ else
 fi
 
 # trivy scan must have run before this
-az storage blob upload --file /opt/azure/containers/trivy-report.json \
+az storage blob upload --file /opt/azure/containers/trivy-report-rootfs.json \
     --container-name ${SIG_CONTAINER_NAME} \
-    --name ${TRIVY_REPORT_NAME} \
+    --name ${TRIVY_REPORT_ROOTFS_NAME} \
     --account-name ${STORAGE_ACCOUNT_NAME} \
     --auth-mode login
 
-az storage blob upload --file /opt/azure/containers/trivy-images-table.txt \
-    --container-name ${SIG_CONTAINER_NAME} \
-    --name ${TRIVY_TABLE_NAME} \
-    --account-name ${STORAGE_ACCOUNT_NAME} \
-    --auth-mode login
+IMAGE_REPORT_LIST=$(ls /opt/azure/containers | grep trivy-report-image | cut -d "." -f1)
+
+for IMAGE_REPORT in ${IMAGE_REPORT_LIST}; do
+    az storage blob upload --file /opt/azure/containers/${IMAGE_REPORT}.json \
+        --container-name ${SIG_CONTAINER_NAME} \
+        --name ${IMAGE_REPORT}-${BUILD_ID}-${TIMESTAMP}.json \
+        --account-name ${STORAGE_ACCOUNT_NAME} \
+        --auth-mode login
+done
